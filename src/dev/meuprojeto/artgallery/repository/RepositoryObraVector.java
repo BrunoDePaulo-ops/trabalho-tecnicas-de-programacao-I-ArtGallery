@@ -120,5 +120,20 @@ public class RepositoryObraVector implements IRepositoryObra {
             }
         }
     }
+
+    @Override
+    public void removerObraDaExposicao(String nomeExposicao, String tituloObra) {
+        for (Exposicao exp : exposicoes) {
+            if (exp.getNome().equalsIgnoreCase(nomeExposicao)) {
+                Vector<Obra> obras = exp.listarObras();
+                for (int i = 0; i < obras.size(); i++) {
+                    if (obras.get(i).getTitulo().equalsIgnoreCase(tituloObra)) {
+                        obras.remove(i);
+                        return;
+                    }
+                }
+            }
+        }
+    }
     
 }

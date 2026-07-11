@@ -104,5 +104,10 @@ public class ArtGallery implements IArtGallery {
     public void removerExposicao(String nome) {
         repository.removerExposicao(nome);
     }
+
+    @Override
+    public void removerObraDaExposicao(String nomeExposicao, String tituloObra) {
+        repository.removerObraDaExposicao(nomeExposicao, tituloObra);
+    }
     
 }

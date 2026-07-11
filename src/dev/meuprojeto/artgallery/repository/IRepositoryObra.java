@@ -17,4 +17,5 @@ public interface IRepositoryObra {
     Vector<Exposicao> listarExposicoes();
     void adicionarObraAExposicao(String nomeExposicao, Obra obra);
     void removerExposicao(String nome);
+    void removerObraDaExposicao(String nomeExposicao, String tituloObra);
 }

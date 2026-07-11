@@ -81,12 +81,10 @@ public class ArtGalleryUI extends JFrame {
     private void atualizarExposicoes() {
         System.out.println("🔄 Atualizando exposições...");
 
-    // 🔥 PASSO 1: FORÇA A RECARGA TOTAL DA JList
         if (listaExpos != null) {
             DefaultListModel<String> model = (DefaultListModel<String>) listaExpos.getModel();
             model.clear();
 
-        // 🔥 BUSCA AS EXPOSIÇÕES DIRETAMENTE DO SERVICE (QUE BUSCA DO REPOSITÓRIO)
             Vector<Exposicao> exposicoesAtuais = artGallery.listarExposicoes();
             System.out.println("📋 Total de exposições: " + exposicoesAtuais.size());
 
@@ -95,7 +93,6 @@ public class ArtGalleryUI extends JFrame {
                 System.out.println("   - Exposição: " + exp.getNome());
             }
 
-        // 🔥 PASSO 2: ATUALIZA A ÁREA DE TEXTO DA EXPOSIÇÃO SELECIONADA
             int idx = listaExpos.getSelectedIndex();
             if (idx >= 0 && idx < exposicoesAtuais.size()) {
                 Exposicao exp = exposicoesAtuais.get(idx);
@@ -105,7 +102,7 @@ public class ArtGalleryUI extends JFrame {
 
                 int count = 0;
                 for (Obra obra : exp.listarObras()) {
-                    if (obra.isAtiva()) {  // ← SÓ MOSTRA OBRAS ATIVAS
+                    if (obra.isAtiva()) {
                         txtObrasExpo.append(" - " + obra.getTitulo() + " (" + obra.getAutor() + ")\n");
                         count++;
                     } else {
@@ -463,6 +460,53 @@ public class ArtGalleryUI extends JFrame {
             }
         });
 
+        // ===== BOTÃO REMOVER OBRA DA EXPOSIÇÃO =====
+        JButton btnRemoverObraDaExposicao = new JButton("Remover obra da exposição");
+        btnRemoverObraDaExposicao.addActionListener(expo -> {
+            String nomeExposicao = listaExpos.getSelectedValue();
+            if (nomeExposicao == null) {
+                JOptionPane.showMessageDialog(panel, "Selecione uma exposição primeiro!");
+                return;
+            }
+
+            Vector<Exposicao> exposicoes = artGallery.listarExposicoes();
+            Exposicao exp = null;
+            for (Exposicao ex : exposicoes) {
+                if (ex.getNome().equalsIgnoreCase(nomeExposicao)) {
+                    exp = ex;
+                    break;
+                }
+            }
+
+            if (exp == null || exp.listarObras().isEmpty()) {
+                JOptionPane.showMessageDialog(panel, "Essa exposição não contém obras.");
+                return;
+            }
+
+            Vector<Obra> obras = exp.listarObras();
+            String[] opcoes = new String[obras.size()];
+            for (int i = 0; i < obras.size(); i++) {
+                opcoes[i] = obras.get(i).getTitulo() + " (" + obras.get(i).getAutor() + ")";
+            }
+
+            String selecionado = (String) JOptionPane.showInputDialog(
+                panel,
+                "Selecione a obra para remover:",
+                "Remover Obra da Exposição",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opcoes,
+                opcoes[0]
+            );
+
+            if (selecionado != null) {
+                String tituloObra = selecionado.split(" \\(")[0];
+                artGallery.removerObraDaExposicao(nomeExposicao, tituloObra);
+                atualizarExposicoes();
+                JOptionPane.showMessageDialog(panel, "Obra removida da exposição com sucesso!");
+            }
+        });
+
         // ===== BOTÃO REMOVER EXPOSIÇÃO =====
         JButton btnRemoverExposicao = new JButton("Remover Exposição Selecionada");
         btnRemoverExposicao.addActionListener(e -> {
@@ -481,18 +525,27 @@ public class ArtGalleryUI extends JFrame {
                 }
             } else {
                 JOptionPane.showMessageDialog(panel, "Selecione uma exposição para remover!");
-        }
-    });
+            }
+        });
 
+        // ===== PAINEL ESQUERDO =====
         JPanel esquerda = new JPanel(new BorderLayout());
         esquerda.add(new JLabel("Exposições Criadas:"), BorderLayout.NORTH);
         esquerda.add(new JScrollPane(listaExpos), BorderLayout.CENTER);
         esquerda.add(btnRemoverExposicao, BorderLayout.SOUTH);
 
+        // ===== PAINEL DIREITO =====
         JPanel direita = new JPanel(new BorderLayout());
-        direita.add(new JScrollPane(txtObrasExpo), BorderLayout.CENTER);
-        direita.add(btnAddObra, BorderLayout.SOUTH);
 
+        // Painel de botões empilhados verticalmente
+        JPanel painelBotoes = new JPanel(new GridLayout(2, 1, 5, 5));
+        painelBotoes.add(btnAddObra);
+        painelBotoes.add(btnRemoverObraDaExposicao);
+
+        direita.add(new JScrollPane(txtObrasExpo), BorderLayout.CENTER);
+        direita.add(painelBotoes, BorderLayout.SOUTH);
+
+        // ===== CENTRO =====
         JPanel centro = new JPanel(new GridLayout(1, 2));
         centro.add(esquerda);
         centro.add(direita);
