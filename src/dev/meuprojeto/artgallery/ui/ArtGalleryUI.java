@@ -19,7 +19,7 @@ public class ArtGalleryUI extends JFrame {
     private DefaultListModel<String> listModel;
 
     public ArtGalleryUI() {
-        IRepositoryObra repository = new RepositoryObraVector();
+        IRepositoryObra repository = new RepositoryObraDatabase();
         artGallery = new ArtGallery(repository);
 
         setTitle("Art Gallery - Sistema de Curadoria de Obras");
@@ -239,9 +239,11 @@ public class ArtGalleryUI extends JFrame {
         JPanel botoes = new JPanel(new FlowLayout());
         JButton btnAtualizar = new JButton("Atualizar Lista");
         JButton btnRemover = new JButton("Remover Obra Selecionada");
+        JButton btnEditar = new JButton("Editar Obra Selecionada");
 
         botoes.add(btnAtualizar);
         botoes.add(btnRemover);
+        botoes.add(btnEditar); 
 
         btnAtualizar.addActionListener(e -> atualizarLista());
 
@@ -265,11 +267,75 @@ public class ArtGalleryUI extends JFrame {
             }
         });
 
+        btnEditar.addActionListener(e -> {
+            int linhaSelecionada = tabela.getSelectedRow();
+            if (linhaSelecionada < 0) {
+                JOptionPane.showMessageDialog(panel, "Selecione uma obra para editar!");
+                return;
+            }
+
+            String titulo = (String) tableModel.getValueAt(linhaSelecionada, 0);
+            Obra obra = artGallery.buscar(titulo);
+    
+            if (obra == null) {
+                JOptionPane.showMessageDialog(panel, "Obra não encontrada!");
+                return;
+            }
+
+            // Abrir janela de edição (vou te mostrar como)
+            abrirJanelaEdicao(obra);
+        });
+
         panel.add(new JScrollPane(tabela), BorderLayout.CENTER);
         panel.add(botoes, BorderLayout.SOUTH);
 
         atualizarLista();
         return panel;
+    }
+
+    private void abrirJanelaEdicao(Obra obra) {
+        System.out.println("🔍 ID da obra sendo editada: " + obra.getId());
+        JDialog dialog = new JDialog(this, "Editar Obra", true);
+        dialog.setSize(350, 250);
+        dialog.setLayout(new GridLayout(0, 2));
+
+        JTextField txtTitulo = new JTextField(obra.getTitulo());
+        JTextField txtAutor = new JTextField(obra.getAutor());
+        JCheckBox chkAtiva = new JCheckBox("Ativa", obra.isAtiva());
+
+        dialog.add(new JLabel("Título:"));
+        dialog.add(txtTitulo);
+        dialog.add(new JLabel("Autor:"));
+        dialog.add(txtAutor);
+        dialog.add(new JLabel("Ativa:"));
+        dialog.add(chkAtiva);
+
+        JButton btnSalvar = new JButton("Salvar");
+        JButton btnCancelar = new JButton("Cancelar");
+
+        btnSalvar.addActionListener(ev -> {
+            obra.setTitulo(txtTitulo.getText());
+            obra.setAutor(txtAutor.getText());
+            obra.setAtiva(chkAtiva.isSelected());
+        
+            try {
+                artGallery.atualizarObra(obra.getId(), obra);
+                JOptionPane.showMessageDialog(dialog, "Obra atualizada!");
+                dialog.dispose();
+                System.out.println("🔄 Chamando atualizarLista()..."); 
+                atualizarLista();
+                System.out.println("✅ atualizarLista() concluído.");
+            } catch (ObraNaoEncontradaException ex) {
+                JOptionPane.showMessageDialog(dialog, "Erro: " + ex.getMessage());
+            }
+        });
+
+        btnCancelar.addActionListener(ev -> dialog.dispose());
+
+        dialog.add(btnSalvar);
+        dialog.add(btnCancelar);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     private JPanel criarPainelAvaliacao() {
@@ -305,10 +371,11 @@ public class ArtGalleryUI extends JFrame {
         panel.add(lblStatus, gbc);
 
         btnAvaliar.addActionListener(e -> {
+            
             try {
                 int nota = Integer.parseInt(txtNota.getText());
                 Avaliacao aval = new Avaliacao(txtUsuario.getText(), nota, txtComentario.getText());
-                artGallery.avaliarObra(txtTitulo.getText(), aval);
+                artGallery.avaliarObra(txtTitulo.getText().trim(), aval);
                 lblStatus.setText("Avaliação adicionada com sucesso!");
                 atualizarLista();
             } catch (NumberFormatException ex) {
@@ -355,11 +422,17 @@ public class ArtGalleryUI extends JFrame {
         JButton btnAtualizar = new JButton("Atualizar Ranking");
 
         btnAtualizar.addActionListener(e -> {
+            System.out.println("🔍 Atualizando Top Obras...");
             model.setRowCount(0);
             int pos = 1;
-            for (Obra obra : artGallery.topObras()) {
+            Vector<Obra> top = artGallery.topObras();
+            for (Obra obra : top) {
+                System.out.println("   " + obra.getTitulo() + " - Média: " + obra.mediaAvaliacoes());
                 model.addRow(new Object[]{pos++, obra.getTitulo(), obra.getAutor(), obra.mediaAvaliacoes()});
             }
+            model.fireTableDataChanged(); 
+            System.out.println("✅ Top Obras atualizado!");
+             
         });
 
         btnAtualizar.doClick();
@@ -392,7 +465,8 @@ public class ArtGalleryUI extends JFrame {
                     if (idx < exposicoes.size()) {
                         Exposicao exp = exposicoes.get(idx);
                         txtObrasExpo.setText("Exposição: " + exp.getNome() + "\n\nObras:\n");
-                        for (Obra obra : exp.listarObras()) {
+                        Vector<Obra> obras = artGallery.listarObrasDaExposicao(exp.getNome());
+                        for (Obra obra : obras) {
                             if (obra.isAtiva()) {
                                 txtObrasExpo.append(" - " + obra.getTitulo() + " (" + obra.getAutor() + ")\n");
                             }
@@ -552,6 +626,8 @@ public class ArtGalleryUI extends JFrame {
 
         panel.add(topo, BorderLayout.NORTH);
         panel.add(centro, BorderLayout.CENTER);
+
+        atualizarExposicoes();
 
         return panel;
     }

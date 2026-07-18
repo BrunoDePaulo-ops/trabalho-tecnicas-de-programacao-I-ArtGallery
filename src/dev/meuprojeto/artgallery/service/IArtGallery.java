@@ -20,4 +20,7 @@ public interface IArtGallery {
     void adicionarObraAExposicao(String nomeExposicao, Obra obra);
     void removerExposicao(String nome);
     void removerObraDaExposicao(String nomeExposicao, String tituloObra);
+    Vector<Obra> listarObrasDaExposicao(String nomeExposicao);
+    void atualizarObra(int id, Obra obra) throws ObraNaoEncontradaException;
+    Obra buscar(String titulo);
 }

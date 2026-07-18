@@ -45,7 +45,8 @@ public class ArtGallery implements IArtGallery {
         if (!obra.isAtiva()) {
             throw new ObraNaoEncontradaException("Obra '" + titulo + "' está inativa e não pode receber avaliações.");
         }
-        obra.adicionarAvaliacao(avaliacao);
+        /*obra.adicionarAvaliacao(avaliacao);*/
+        repository.adicionarAvaliacao(obra.getId(), avaliacao);
     }
 
     @Override
@@ -110,4 +111,18 @@ public class ArtGallery implements IArtGallery {
         repository.removerObraDaExposicao(nomeExposicao, tituloObra);
     }
     
+    @Override
+    public Vector<Obra> listarObrasDaExposicao(String nomeExposicao) {
+        return repository.listarObrasDaExposicao(nomeExposicao);
+    }
+    
+    @Override
+        public void atualizarObra(int id, Obra obra) throws ObraNaoEncontradaException {
+        repository.atualizar(id, obra);
+    }
+
+    @Override
+    public Obra buscar(String titulo) {
+        return repository.buscar(titulo);
+    }
 }

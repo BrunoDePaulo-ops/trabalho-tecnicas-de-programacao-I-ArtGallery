@@ -2,6 +2,7 @@ package dev.meuprojeto.artgallery.repository;
 
 import java.util.Vector;
 
+import dev.meuprojeto.artgallery.model.Avaliacao;
 import dev.meuprojeto.artgallery.model.Exposicao;
 import dev.meuprojeto.artgallery.model.Obra;
 import dev.meuprojeto.artgallery.exception.ObraJaCadastradaException;
@@ -61,7 +62,7 @@ public class RepositoryObraVector implements IRepositoryObra {
     }
 
     @Override
-    public void atualizar(Obra obra) throws ObraNaoEncontradaException {
+    public void atualizar(int id, Obra obra) throws ObraNaoEncontradaException {
         if (obra == null) {
             return;
         }
@@ -134,6 +135,52 @@ public class RepositoryObraVector implements IRepositoryObra {
                 }
             }
         }
+    }
+
+    @Override
+    public Vector<Obra> listarObrasDaExposicao(String nomeExposicao) {
+        Vector<Obra> obras = new Vector<>();
+    
+        // 1. Procura a exposição pelo nome
+        for (Exposicao exp : exposicoes) {
+            if (exp.getNome().equalsIgnoreCase(nomeExposicao)) {
+            // 2. Pega as obras da exposição
+                for (Obra obra : exp.listarObras()) {
+                    if (obra.isAtiva()) {
+                        obras.add(obra);
+                    }
+                }
+                break;
+            }
+        }
+    
+        return obras;
+    }
+
+    @Override
+    public void avaliarObra(String titulo, Avaliacao avaliacao) throws ObraNaoEncontradaException {
+    // Procura a obra pelo título
+        for (Obra obra : obras) {
+            if (obra.getTitulo().equalsIgnoreCase(titulo)) {
+                obra.adicionarAvaliacao(avaliacao);
+                System.out.println("✅ Avaliação adicionada em memória!");
+                return;
+            }
+        }
+    throw new ObraNaoEncontradaException("Obra com título '" + titulo + "' não encontrada!");
+    }
+
+    @Override
+    public void adicionarAvaliacao(int obraId, Avaliacao avaliacao) {
+
+        for (Obra obra : obras) {
+            if (obra.getId() == obraId) {
+                obra.adicionarAvaliacao(avaliacao);
+                System.out.println("✅ Avaliação adicionada em memória (Vector) para obra ID: " + obraId);
+                return;
+            }
+        }
+        System.out.println("⚠️ Obra com ID " + obraId + " não encontrada no Vector!");
     }
     
 }

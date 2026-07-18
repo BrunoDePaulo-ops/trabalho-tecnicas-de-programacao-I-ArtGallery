@@ -1,0 +1,11 @@
+# Ignorar arquivos da pasta artgallery (UI)
+src/dev/meuprojeto/artgallery/AdicionarNaExposicao.java
+src/dev/meuprojeto/artgallery/AdicionarObra.java
+src/dev/meuprojeto/artgallery/Atualizar.java
+src/dev/meuprojeto/artgallery/AvaliarAObra.java
+src/dev/meuprojeto/artgallery/AvaliarObra.java
+src/dev/meuprojeto/artgallery/Cadastrar.java
+src/dev/meuprojeto/artgallery/TesteAvaliar.java
+src/dev/meuprojeto/artgallery/TesteBanco.java
+src/dev/meuprojeto/artgallery/TesteCarregarAvaliacoes.java
+src/dev/meuprojeto/artgallery/TesteTopObras.java

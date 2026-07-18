@@ -7,6 +7,7 @@ public abstract class Obra {
     private String autor;
     private boolean ativa;
     private Vector<Avaliacao> avaliacoes;
+    private int id;
 
     public Obra(String titulo, String autor){
         this.titulo = titulo;
@@ -29,6 +30,13 @@ public abstract class Obra {
     public boolean isAtiva(){
         return ativa;
     }
+     public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
     public void setAtiva(boolean ativa){
         this.ativa = ativa;
     }
@@ -48,4 +56,8 @@ public abstract class Obra {
         return (double) soma / avaliacoes.size();
     }
     public abstract String exibirDetalhes();
+
+    public Vector<Avaliacao> getAvaliacoes() {
+        return avaliacoes;
+    }
 }
