@@ -34,6 +34,7 @@ public class ArtGalleryUI extends JFrame {
         abas.addTab("Buscar por Autor", criarPainelBusca());
         abas.addTab("Top Obras", criarPainelTopObras());
         abas.addTab("Exposições", criarPainelExposicoes());
+        abas.addTab("Ver Avaliações", criarPainelVerAvaliacoes());
 
         add(abas);
     }
@@ -628,6 +629,141 @@ public class ArtGalleryUI extends JFrame {
         panel.add(centro, BorderLayout.CENTER);
 
         atualizarExposicoes();
+
+        return panel;
+    }
+
+    private JPanel criarPainelVerAvaliacoes() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    // ===== PAINEL SUPERIOR: Seleção da obra =====
+        JPanel panelTopo = new JPanel(new BorderLayout(10, 10));
+        panelTopo.setBorder(BorderFactory.createTitledBorder("📚 SELECIONE UMA OBRA"));
+
+    // Campo de busca + botão
+        JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JTextField txtTitulo = new JTextField(25);
+        JButton btnBuscar = new JButton("🔍 Buscar Avaliações");
+        panelBusca.add(new JLabel("Título da Obra:"));
+        panelBusca.add(txtTitulo);
+        panelBusca.add(btnBuscar);
+
+    // Tabela para mostrar as avaliações
+        String[] colunas = {"Usuário", "Nota", "Comentário"};
+        DefaultTableModel modelAvaliacoes = new DefaultTableModel(colunas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        JTable tabelaAvaliacoes = new JTable(modelAvaliacoes);
+        tabelaAvaliacoes.setRowHeight(25);
+        tabelaAvaliacoes.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        tabelaAvaliacoes.setFont(new Font("Arial", Font.PLAIN, 12));
+
+        JScrollPane scrollTabela = new JScrollPane(tabelaAvaliacoes);
+        scrollTabela.setPreferredSize(new Dimension(400, 200));
+
+        panelTopo.add(panelBusca, BorderLayout.NORTH);
+        panelTopo.add(scrollTabela, BorderLayout.CENTER);
+
+    // ===== PAINEL CENTRAL: Resumo da obra =====
+        JPanel panelResumo = new JPanel(new BorderLayout());
+        panelResumo.setBorder(BorderFactory.createTitledBorder("📊 RESUMO DA OBRA"));
+
+        JTextArea txtResumo = new JTextArea();
+        txtResumo.setEditable(false);
+        txtResumo.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        txtResumo.setBackground(new Color(245, 245, 245));
+        txtResumo.setText("🔍 Busque uma obra para ver suas avaliações.");
+
+        JScrollPane scrollResumo = new JScrollPane(txtResumo);
+        scrollResumo.setPreferredSize(new Dimension(400, 100));
+
+        panelResumo.add(scrollResumo, BorderLayout.CENTER);
+
+    // ===== AÇÃO DO BOTÃO BUSCAR =====
+        btnBuscar.addActionListener(e -> {
+            String titulo = txtTitulo.getText().trim();
+            if (titulo.isEmpty()) {
+                JOptionPane.showMessageDialog(panel, 
+                    "Digite o título da obra!", 
+                    "Aviso", 
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+        // Limpa a tabela
+            modelAvaliacoes.setRowCount(0);
+
+            try {
+            // Busca a obra primeiro para ver se existe
+                Obra obra = artGallery.buscar(titulo);
+                if (obra == null) {
+                    txtResumo.setText("❌ Obra \"" + titulo + "\" não encontrada!");
+                    return;
+                }
+
+            // Busca as avaliações
+                Vector<Avaliacao> avaliacoes = artGallery.listarAvaliacoes(titulo);
+
+                // Calcula a média com as avaliações que você já buscou
+                double media = 0;
+                if (!avaliacoes.isEmpty()) {
+                    int soma = 0;
+                    for (Avaliacao aval : avaliacoes) {
+                        soma += aval.getNota();
+                    }
+                    media = (double) soma / avaliacoes.size();
+                }
+
+
+            // Preenche o resumo
+                StringBuilder sb = new StringBuilder();
+                sb.append("📖 Título: ").append(obra.getTitulo()).append("\n");
+                sb.append("✍️ Autor: ").append(obra.getAutor()).append("\n");
+                sb.append("📊 Média: ").append(String.format("%.1f", media)).append("/10\n");
+                sb.append("📝 Total de avaliações: ").append(avaliacoes.size()).append("\n");
+                txtResumo.setText(sb.toString());
+
+            // Preenche a tabela
+                if (avaliacoes.isEmpty()) {
+                    JOptionPane.showMessageDialog(panel, 
+                        "Nenhuma avaliação encontrada para \"" + titulo + "\"", 
+                        "Info", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    for (Avaliacao aval : avaliacoes) {
+                        modelAvaliacoes.addRow(new Object[]{
+                            aval.getUsuario(),
+                            aval.getNota() + "/10",
+                            aval.getComentario()
+                        });
+                    }
+                }
+
+            } catch (Exception ex) {
+                txtResumo.setText("❌ Erro ao buscar avaliações: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+    // ===== BOTÃO ATUALIZAR (opcional) =====
+        JButton btnAtualizar = new JButton("🔄 Limpar");
+        btnAtualizar.addActionListener(e -> {
+            txtTitulo.setText("");
+            modelAvaliacoes.setRowCount(0);
+            txtResumo.setText("🔍 Busque uma obra para ver suas avaliações.");
+        });
+
+        JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelBotoes.add(btnAtualizar);
+        panelTopo.add(panelBotoes, BorderLayout.SOUTH);
+
+    // ===== MONTAGEM FINAL =====
+        panel.add(panelTopo, BorderLayout.NORTH);
+        panel.add(panelResumo, BorderLayout.CENTER);
 
         return panel;
     }

@@ -23,4 +23,5 @@ public interface IArtGallery {
     Vector<Obra> listarObrasDaExposicao(String nomeExposicao);
     void atualizarObra(int id, Obra obra) throws ObraNaoEncontradaException;
     Obra buscar(String titulo);
+    Vector<Avaliacao> listarAvaliacoes(String tituloObra);
 }

@@ -11,6 +11,7 @@ import dev.meuprojeto.artgallery.exception.ObraNaoEncontradaException;
 public class RepositoryObraVector implements IRepositoryObra {
     private Vector<Obra> obras;
     private Vector<Exposicao> exposicoes;
+    private IRepositoryObra repository;
 
     public RepositoryObraVector() {
         this.obras = new Vector<>();
@@ -167,7 +168,7 @@ public class RepositoryObraVector implements IRepositoryObra {
                 return;
             }
         }
-    throw new ObraNaoEncontradaException("Obra com título '" + titulo + "' não encontrada!");
+        throw new ObraNaoEncontradaException("Obra com título '" + titulo + "' não encontrada!");
     }
 
     @Override
@@ -182,5 +183,25 @@ public class RepositoryObraVector implements IRepositoryObra {
         }
         System.out.println("⚠️ Obra com ID " + obraId + " não encontrada no Vector!");
     }
+    
+    @Override
+    public Vector<Avaliacao> listarAvaliacoes(String tituloObra){
+        
+        Vector<Avaliacao> avaliacoes = repository.listarAvaliacoes(tituloObra);
+        if(avaliacoes == null || avaliacoes.isEmpty()){
+            System.out.println("⚠️ Não existem avaliações para esta obra no banco de dados!");
+            return avaliacoes;
+        }else{
+            for (Avaliacao aval : avaliacoes){
+                System.out.println("Usuário: " + aval.getUsuario() + 
+                           " | Nota: " + aval.getNota() + 
+                           " | Comentário: " + aval.getComentario());
+            }
+            
+        }
+        return avaliacoes;
+    }
+    
+
     
 }

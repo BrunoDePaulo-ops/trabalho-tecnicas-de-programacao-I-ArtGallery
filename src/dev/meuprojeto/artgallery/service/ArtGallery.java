@@ -117,7 +117,7 @@ public class ArtGallery implements IArtGallery {
     }
     
     @Override
-        public void atualizarObra(int id, Obra obra) throws ObraNaoEncontradaException {
+    public void atualizarObra(int id, Obra obra) throws ObraNaoEncontradaException {
         repository.atualizar(id, obra);
     }
 
@@ -125,4 +125,11 @@ public class ArtGallery implements IArtGallery {
     public Obra buscar(String titulo) {
         return repository.buscar(titulo);
     }
+
+    @Override
+    public Vector<Avaliacao> listarAvaliacoes(String tituloObra){
+        return repository.listarAvaliacoes(tituloObra);
+    }
+
+
 }
