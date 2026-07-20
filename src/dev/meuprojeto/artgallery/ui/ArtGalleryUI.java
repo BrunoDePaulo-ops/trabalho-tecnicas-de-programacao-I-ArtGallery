@@ -544,24 +544,16 @@ public class ArtGalleryUI extends JFrame {
                 return;
             }
 
-            Vector<Exposicao> exposicoes = artGallery.listarExposicoes();
-            Exposicao exp = null;
-            for (Exposicao ex : exposicoes) {
-                if (ex.getNome().equalsIgnoreCase(nomeExposicao)) {
-                    exp = ex;
-                    break;
-                }
-            }
+            Vector<Obra> obras = artGallery.listarObrasDaExposicao(nomeExposicao);
 
-            if (exp == null || exp.listarObras().isEmpty()) {
+            if (obras.isEmpty()) {
                 JOptionPane.showMessageDialog(panel, "Essa exposição não contém obras.");
                 return;
             }
 
-            Vector<Obra> obras = exp.listarObras();
-            String[] opcoes = new String[obras.size()];
+            String[] nomesObras = new String[obras.size()];
             for (int i = 0; i < obras.size(); i++) {
-                opcoes[i] = obras.get(i).getTitulo() + " (" + obras.get(i).getAutor() + ")";
+                nomesObras[i] = obras.get(i).getTitulo();
             }
 
             String selecionado = (String) JOptionPane.showInputDialog(
@@ -570,8 +562,8 @@ public class ArtGalleryUI extends JFrame {
                 "Remover Obra da Exposição",
                 JOptionPane.QUESTION_MESSAGE,
                 null,
-                opcoes,
-                opcoes[0]
+                nomesObras,
+                nomesObras[0]
             );
 
             if (selecionado != null) {
