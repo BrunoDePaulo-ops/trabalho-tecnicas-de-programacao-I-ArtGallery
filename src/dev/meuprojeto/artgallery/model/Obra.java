@@ -30,7 +30,7 @@ public abstract class Obra {
     public boolean isAtiva(){
         return ativa;
     }
-     public int getId() {
+    public int getId() {
         return id;
     }
 

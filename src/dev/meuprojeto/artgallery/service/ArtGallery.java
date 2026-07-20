@@ -46,7 +46,7 @@ public class ArtGallery implements IArtGallery {
             throw new ObraNaoEncontradaException("Obra '" + titulo + "' está inativa e não pode receber avaliações.");
         }
         /*obra.adicionarAvaliacao(avaliacao);*/
-        repository.adicionarAvaliacao(obra.getId(), avaliacao);
+        repository.avaliarObra(obra.getTitulo(), avaliacao);
     }
 
     @Override

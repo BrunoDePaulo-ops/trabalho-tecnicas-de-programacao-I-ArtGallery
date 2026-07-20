@@ -393,7 +393,7 @@ public class RepositoryObraDatabase implements IRepositoryObra{
             System.out.println("❌ Título vazio!");
             return -1;
         }
-        String tituloNormalizado = titulo.trim();
+        String tituloNormalizado = titulo.trim().toLowerCase();
         System.out.println("🔍 Buscando obra: '" + tituloNormalizado + "'");
 
         String sqlBusca = "SELECT id FROM obras WHERE LOWER(TRIM(titulo)) = LOWER(TRIM(?))";
@@ -608,9 +608,9 @@ public class RepositoryObraDatabase implements IRepositoryObra{
                 }
                 if (obraEncontrada != null) {
                     int id = rs.getInt("id");
-                    carregarAvaliacoes(obraEncontrada);
-                    obraEncontrada.setId(id); 
+                    obraEncontrada.setId(id);
                     obraEncontrada.setAtiva(ativa);
+                    carregarAvaliacoes(obraEncontrada);
                     return obraEncontrada;
                 }
             }
@@ -651,8 +651,9 @@ public class RepositoryObraDatabase implements IRepositoryObra{
         }
     }
     */
+    
     public void carregarAvaliacoes(Obra obra) {
-        System.out.println("🔍 Carregando avaliações para: " + obra.getTitulo() + " (ID: " + obra.getId() + ")");
+        System.out.println("🔍 Carregando avaliações para: " + obra.getTitulo().trim().toLowerCase() + " (ID: " + obra.getId() + ")");
     
         String sql = "SELECT usuario, nota, comentario FROM avaliacoes WHERE obra_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -663,7 +664,7 @@ public class RepositoryObraDatabase implements IRepositoryObra{
             int count = 0;
             while (rs.next()) {
                 count++;
-                System.out.println("   ✅ Linha " + count + " encontrada!");
+                System.out.println("   ✅ Linha " + count + " encontrada!"); 
                 try {
                     Avaliacao aval = new Avaliacao(
                         rs.getString("usuario"),
@@ -681,20 +682,5 @@ public class RepositoryObraDatabase implements IRepositoryObra{
             e.printStackTrace(); 
         }
     }
-
-    @Override
-    public void adicionarAvaliacao(int obraId, Avaliacao avaliacao) {
-        String sql = "INSERT INTO avaliacoes (obra_id, usuario, comentario, nota) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, obraId);
-            pstmt.setString(2, avaliacao.getUsuario());
-            pstmt.setString(3, avaliacao.getComentario());
-            pstmt.setInt(4, avaliacao.getNota());
-            pstmt.executeUpdate();
-            System.out.println("✅ Avaliação salva no banco!");
-        } catch (SQLException e) {
-            System.out.println("❌ Erro ao salvar avaliação: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+    
 }

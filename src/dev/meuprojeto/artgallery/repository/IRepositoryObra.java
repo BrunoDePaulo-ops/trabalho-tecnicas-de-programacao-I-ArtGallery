@@ -21,6 +21,5 @@ public interface IRepositoryObra {
     void removerObraDaExposicao(String nomeExposicao, String tituloObra);
     Vector<Obra> listarObrasDaExposicao(String nomeExposicao);
     void avaliarObra(String titulo, Avaliacao avaliacao) throws ObraNaoEncontradaException;
-    void adicionarAvaliacao(int obraId, Avaliacao avaliacao);
     Vector<Avaliacao> listarAvaliacoes(String tituloObra);
 }

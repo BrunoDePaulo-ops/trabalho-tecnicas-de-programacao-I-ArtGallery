@@ -172,19 +172,6 @@ public class RepositoryObraVector implements IRepositoryObra {
     }
 
     @Override
-    public void adicionarAvaliacao(int obraId, Avaliacao avaliacao) {
-
-        for (Obra obra : obras) {
-            if (obra.getId() == obraId) {
-                obra.adicionarAvaliacao(avaliacao);
-                System.out.println("✅ Avaliação adicionada em memória (Vector) para obra ID: " + obraId);
-                return;
-            }
-        }
-        System.out.println("⚠️ Obra com ID " + obraId + " não encontrada no Vector!");
-    }
-    
-    @Override
     public Vector<Avaliacao> listarAvaliacoes(String tituloObra){
         
         Vector<Avaliacao> avaliacoes = repository.listarAvaliacoes(tituloObra);
