@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import dev.meuprojeto.artgallery.model.Obra;
 import dev.meuprojeto.artgallery.model.Avaliacao;
+import dev.meuprojeto.artgallery.model.Exposicao;
 import dev.meuprojeto.artgallery.repository.IRepositoryObra;
 import dev.meuprojeto.artgallery.exception.ObraJaCadastradaException;
 import dev.meuprojeto.artgallery.exception.ObraNaoEncontradaException;
@@ -15,6 +16,10 @@ public class ArtGallery implements IArtGallery {
 
     public ArtGallery(IRepositoryObra repository) {
         this.repository = repository;
+    }
+    @Override
+    public void criarExposicao(String nome) {
+        repository.criarExposicao(nome);
     }
 
     @Override
@@ -40,7 +45,8 @@ public class ArtGallery implements IArtGallery {
         if (!obra.isAtiva()) {
             throw new ObraNaoEncontradaException("Obra '" + titulo + "' está inativa e não pode receber avaliações.");
         }
-        obra.adicionarAvaliacao(avaliacao);
+        /*obra.adicionarAvaliacao(avaliacao);*/
+        repository.avaliarObra(obra.getTitulo(), avaliacao);
     }
 
     @Override
@@ -84,4 +90,46 @@ public class ArtGallery implements IArtGallery {
         });
         return ordenadas;
     }
+    
+    @Override
+    public Vector<Exposicao> listarExposicoes() {
+        return repository.listarExposicoes();
+    }
+    
+    @Override
+    public void adicionarObraAExposicao(String nomeExposicao, Obra obra) {
+        repository.adicionarObraAExposicao(nomeExposicao, obra);
+    }
+
+    @Override
+    public void removerExposicao(String nome) {
+        repository.removerExposicao(nome);
+    }
+
+    @Override
+    public void removerObraDaExposicao(String nomeExposicao, String tituloObra) {
+        repository.removerObraDaExposicao(nomeExposicao, tituloObra);
+    }
+    
+    @Override
+    public Vector<Obra> listarObrasDaExposicao(String nomeExposicao) {
+        return repository.listarObrasDaExposicao(nomeExposicao);
+    }
+    
+    @Override
+    public void atualizarObra(int id, Obra obra) throws ObraNaoEncontradaException {
+        repository.atualizar(id, obra);
+    }
+
+    @Override
+    public Obra buscar(String titulo) {
+        return repository.buscar(titulo);
+    }
+
+    @Override
+    public Vector<Avaliacao> listarAvaliacoes(String tituloObra){
+        return repository.listarAvaliacoes(tituloObra);
+    }
+
+
 }

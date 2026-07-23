@@ -26,7 +26,25 @@ public class Exposicao {
     }
 
     public Vector<Obra> listarObras() {
-        return obras;
+        Vector<Obra> ativas = new Vector<>();
+        for (Obra obra : obras) {
+            if (obra.isAtiva()) {
+                ativas.add(obra);
+            }
+        }
+        return ativas;
+    }
+    public boolean contemObra(Obra obra) {
+        if (obra == null) {
+            return false;
+        }
+        for (Obra o : obras) {
+            if (o.getTitulo().trim().equalsIgnoreCase(obra.getTitulo().trim()) &&
+                o.getAutor().trim().equalsIgnoreCase(obra.getAutor().trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int totalObras() {

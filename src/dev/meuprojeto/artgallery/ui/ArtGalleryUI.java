@@ -14,10 +14,12 @@ public class ArtGalleryUI extends JFrame {
     private IArtGallery artGallery;
     private JTabbedPane abas;
     private DefaultTableModel tableModel;
-    private Vector<Exposicao> exposicoes = new Vector<>();
+    private JList<String> listaExpos;
+    private JTextArea txtObrasExpo;
+    private DefaultListModel<String> listModel;
 
     public ArtGalleryUI() {
-        IRepositoryObra repository = new RepositoryObraVector();
+        IRepositoryObra repository = new RepositoryObraDatabase();
         artGallery = new ArtGallery(repository);
 
         setTitle("Art Gallery - Sistema de Curadoria de Obras");
@@ -32,6 +34,7 @@ public class ArtGalleryUI extends JFrame {
         abas.addTab("Buscar por Autor", criarPainelBusca());
         abas.addTab("Top Obras", criarPainelTopObras());
         abas.addTab("Exposições", criarPainelExposicoes());
+        abas.addTab("Ver Avaliações", criarPainelVerAvaliacoes());
 
         add(abas);
     }
@@ -76,171 +79,264 @@ public class ArtGalleryUI extends JFrame {
         }
     }
 
-    private JPanel criarPainelCadastro() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbc = new GridBagConstraints();
-    gbc.insets = new Insets(5, 5, 5, 5);
-    gbc.fill = GridBagConstraints.HORIZONTAL;
-    gbc.gridwidth = 1;
+    private void atualizarExposicoes() {
+        System.out.println("🔄 Atualizando exposições...");
 
-    // Campos comuns
-    JTextField txtTitulo = new JTextField(20);
-    JTextField txtAutor = new JTextField(20);
-    JComboBox<String> cbTipo = new JComboBox<>(new String[]{"Pintura Digital", "Modelagem 3D", "Arte Generativa"});
+        if (listaExpos != null) {
+            DefaultListModel<String> model = (DefaultListModel<String>) listaExpos.getModel();
+            model.clear();
 
-    // Dois campos reutilizáveis (usados para todos os tipos)
-    JTextField txtCampo1 = new JTextField(15);
-    JTextField txtCampo2 = new JTextField(15);
-    JLabel lblCampo1 = new JLabel("Resolução:");
-    JLabel lblCampo2 = new JLabel("Software:");
+            Vector<Exposicao> exposicoesAtuais = artGallery.listarExposicoes();
+            System.out.println("📋 Total de exposições: " + exposicoesAtuais.size());
 
-    int row = 0;
-    
-    // Título
-    gbc.gridx = 0; gbc.gridy = row; panel.add(new JLabel("Título:"), gbc);
-    gbc.gridx = 1; panel.add(txtTitulo, gbc);
-    row++;
-    
-    // Autor
-    gbc.gridx = 0; gbc.gridy = row; panel.add(new JLabel("Autor:"), gbc);
-    gbc.gridx = 1; panel.add(txtAutor, gbc);
-    row++;
-    
-    // Tipo de Obra
-    gbc.gridx = 0; gbc.gridy = row; panel.add(new JLabel("Tipo de Obra:"), gbc);
-    gbc.gridx = 1; panel.add(cbTipo, gbc);
-    row++;
-    
-    // Campo 1 (label + textfield)
-    gbc.gridx = 0; gbc.gridy = row; panel.add(lblCampo1, gbc);
-    gbc.gridx = 1; panel.add(txtCampo1, gbc);
-    row++;
-    
-    // Campo 2 (label + textfield)
-    gbc.gridx = 0; gbc.gridy = row; panel.add(lblCampo2, gbc);
-    gbc.gridx = 1; panel.add(txtCampo2, gbc);
-    row++;
-
-    // Botão Cadastrar
-    JButton btnCadastrar = new JButton("Cadastrar Obra");
-    gbc.gridx = 0;
-    gbc.gridy = row;
-    gbc.gridwidth = 2;
-    panel.add(btnCadastrar, gbc);
-    row++;
-
-    // Label de status
-    JLabel lblStatus = new JLabel(" ");
-    gbc.gridy = row;
-    panel.add(lblStatus, gbc);
-
-    // Listener do comboBox - só muda os textos dos labels
-    cbTipo.addActionListener(e -> {
-        String tipo = (String) cbTipo.getSelectedItem();
-        
-        if ("Pintura Digital".equals(tipo)) {
-            lblCampo1.setText("Resolução:");
-            lblCampo2.setText("Software:");
-        } else if ("Modelagem 3D".equals(tipo)) {
-            lblCampo1.setText("Polígonos:");
-            lblCampo2.setText("Engine:");
-        } else { // Arte Generativa
-            lblCampo1.setText("Algoritmo:");
-            lblCampo2.setText("Seed:");
-        }
-        
-        // Limpa os campos ao trocar de tipo
-        txtCampo1.setText("");
-        txtCampo2.setText("");
-    });
-
-    // Ação do botão cadastrar
-    btnCadastrar.addActionListener(e -> {
-        String titulo = txtTitulo.getText();
-        String autor = txtAutor.getText();
-        String tipo = (String) cbTipo.getSelectedItem();
-
-        try {
-            Obra obra = null;
-            if ("Pintura Digital".equals(tipo)) {
-                obra = new PinturaDigital(titulo, autor, txtCampo1.getText(), txtCampo2.getText());
-            } else if ("Modelagem 3D".equals(tipo)) {
-                int poligonos = Integer.parseInt(txtCampo1.getText());
-                obra = new Modelagem3D(titulo, autor, poligonos, txtCampo2.getText());
-            } else {
-                long seed = Long.parseLong(txtCampo2.getText());
-                obra = new ArteGenerativa(titulo, autor, txtCampo1.getText(), seed);
+            for (Exposicao exp : exposicoesAtuais) {
+                model.addElement(exp.getNome());
+                System.out.println("   - Exposição: " + exp.getNome());
             }
-            artGallery.publicObra(obra);
-            lblStatus.setText("Obra cadastrada com sucesso!");
-            
-            // Limpar campos
-            txtTitulo.setText("");
-            txtAutor.setText("");
+
+            int idx = listaExpos.getSelectedIndex();
+            if (idx >= 0 && idx < exposicoesAtuais.size()) {
+                Exposicao exp = exposicoesAtuais.get(idx);
+                System.out.println("📋 Exposição selecionada: " + exp.getNome());
+
+                txtObrasExpo.setText("Exposição: " + exp.getNome() + "\n\nObras:\n");
+
+                int count = 0;
+                for (Obra obra : exp.listarObras()) {
+                    if (obra.isAtiva()) {
+                        txtObrasExpo.append(" - " + obra.getTitulo() + " (" + obra.getAutor() + ")\n");
+                        count++;
+                    } else {
+                        System.out.println("   - Obra inativa IGNORADA: " + obra.getTitulo());
+                    }
+                }
+                System.out.println("📋 Total de obras ativas na exposição: " + count);
+            } else {
+                txtObrasExpo.setText("Selecione uma exposição");
+            }
+        }
+    }
+
+    private JPanel criarPainelCadastro() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = 1;
+
+        JTextField txtTitulo = new JTextField(20);
+        JTextField txtAutor = new JTextField(20);
+        JComboBox<String> cbTipo = new JComboBox<>(new String[]{"Pintura Digital", "Modelagem 3D", "Arte Generativa"});
+
+        JTextField txtCampo1 = new JTextField(15);
+        JTextField txtCampo2 = new JTextField(15);
+        JLabel lblCampo1 = new JLabel("Resolução:");
+        JLabel lblCampo2 = new JLabel("Software:");
+
+        int row = 0;
+
+        gbc.gridx = 0; gbc.gridy = row; panel.add(new JLabel("Título:"), gbc);
+        gbc.gridx = 1; panel.add(txtTitulo, gbc);
+        row++;
+
+        gbc.gridx = 0; gbc.gridy = row; panel.add(new JLabel("Autor:"), gbc);
+        gbc.gridx = 1; panel.add(txtAutor, gbc);
+        row++;
+
+        gbc.gridx = 0; gbc.gridy = row; panel.add(new JLabel("Tipo de Obra:"), gbc);
+        gbc.gridx = 1; panel.add(cbTipo, gbc);
+        row++;
+
+        gbc.gridx = 0; gbc.gridy = row; panel.add(lblCampo1, gbc);
+        gbc.gridx = 1; panel.add(txtCampo1, gbc);
+        row++;
+
+        gbc.gridx = 0; gbc.gridy = row; panel.add(lblCampo2, gbc);
+        gbc.gridx = 1; panel.add(txtCampo2, gbc);
+        row++;
+
+        JButton btnCadastrar = new JButton("Cadastrar Obra");
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 2;
+        panel.add(btnCadastrar, gbc);
+        row++;
+
+        JLabel lblStatus = new JLabel(" ");
+        gbc.gridy = row;
+        panel.add(lblStatus, gbc);
+
+        cbTipo.addActionListener(e -> {
+            String tipo = (String) cbTipo.getSelectedItem();
+            if ("Pintura Digital".equals(tipo)) {
+                lblCampo1.setText("Resolução:");
+                lblCampo2.setText("Software:");
+            } else if ("Modelagem 3D".equals(tipo)) {
+                lblCampo1.setText("Polígonos:");
+                lblCampo2.setText("Engine:");
+            } else {
+                lblCampo1.setText("Algoritmo:");
+                lblCampo2.setText("Seed:");
+            }
             txtCampo1.setText("");
             txtCampo2.setText("");
-            
-            // Atualizar listagem
-            atualizarLista();
-            
-        } catch (ObraJaCadastradaException ex) {
-            lblStatus.setText("Erro: " + ex.getMessage());
-        } catch (NumberFormatException ex) {
-            lblStatus.setText("Erro: Valores numéricos inválidos");
-        }
-    });
+        });
 
-    // Inicializar com o tipo correto (Pintura Digital)
-    cbTipo.getActionListeners()[0].actionPerformed(null);
-    
-    return panel;
+        btnCadastrar.addActionListener(e -> {
+            String titulo = txtTitulo.getText();
+            String autor = txtAutor.getText();
+            String tipo = (String) cbTipo.getSelectedItem();
+            String campo1 = txtCampo1.getText().trim();
+            String campo2 = txtCampo2.getText().trim();
+
+            if (titulo.isEmpty()) {
+                lblStatus.setText("Erro: O título é obrigatório!");
+                return;
+            }
+            if (autor.isEmpty()) {
+                lblStatus.setText("Erro: O autor é obrigatório!");
+                return;
+            }
+            if (campo1.isEmpty() || campo2.isEmpty()) {
+                lblStatus.setText("Erro: Preencha todos os campos específicos!");
+                return;
+            }
+
+            try {
+                Obra obra = null;
+                if ("Pintura Digital".equals(tipo)) {
+                    obra = new PinturaDigital(titulo, autor, txtCampo1.getText(), txtCampo2.getText());
+                } else if ("Modelagem 3D".equals(tipo)) {
+                    int poligonos = Integer.parseInt(txtCampo1.getText());
+                    obra = new Modelagem3D(titulo, autor, poligonos, txtCampo2.getText());
+                } else {
+                    long seed = Long.parseLong(txtCampo2.getText());
+                    obra = new ArteGenerativa(titulo, autor, txtCampo1.getText(), seed);
+                }
+                artGallery.publicObra(obra);
+                lblStatus.setText("Obra cadastrada com sucesso!");
+                txtTitulo.setText("");
+                txtAutor.setText("");
+                txtCampo1.setText("");
+                txtCampo2.setText("");
+                atualizarLista();
+            } catch (ObraJaCadastradaException ex) {
+                lblStatus.setText("Erro: " + ex.getMessage());
+            } catch (NumberFormatException ex) {
+                lblStatus.setText("Erro: Valores numéricos inválidos");
+            }
+        });
+
+        cbTipo.getActionListeners()[0].actionPerformed(null);
+        return panel;
     }
 
     private JPanel criarPainelListagem() {
         JPanel panel = new JPanel(new BorderLayout());
-    
-    tableModel = new DefaultTableModel(new String[]{"Título", "Autor", "Tipo", "Detalhes", "Média"}, 0);
-    JTable tabela = new JTable(tableModel);
-    
-    JPanel botoes = new JPanel(new FlowLayout());
-    JButton btnAtualizar = new JButton("Atualizar Lista");
-    JButton btnRemover = new JButton("Remover Obra Selecionada");
-    
-    botoes.add(btnAtualizar);
-    botoes.add(btnRemover);
-    
-    btnAtualizar.addActionListener(e -> atualizarLista());
-    
-    btnRemover.addActionListener(e -> {
-        int linhaSelecionada = tabela.getSelectedRow();
-        if (linhaSelecionada >= 0) {
-            String titulo = (String) tableModel.getValueAt(linhaSelecionada, 0);
-            int confirm = JOptionPane.showConfirmDialog(
-                panel,
-                "Deseja remover a obra '" + titulo + "'?",
-                "Confirmar Remoção",
-                JOptionPane.YES_NO_OPTION
-            );
-            if (confirm == JOptionPane.YES_OPTION) {
-                try {
-                    artGallery.removerObra(titulo);
-                    JOptionPane.showMessageDialog(panel, "Obra removida com sucesso!");
-                    atualizarLista();
-                } catch (ObraNaoEncontradaException ex) {
-                    JOptionPane.showMessageDialog(panel, "Erro: " + ex.getMessage());
-                }
-            }
-        } else {
-            JOptionPane.showMessageDialog(panel, "Selecione uma obra para remover!");
-        }
-    });
-    
-    panel.add(new JScrollPane(tabela), BorderLayout.CENTER);
-    panel.add(botoes, BorderLayout.SOUTH);
-    
-    atualizarLista();
-    return panel;
 
+        tableModel = new DefaultTableModel(new String[]{"Título", "Autor", "Tipo", "Detalhes", "Média"}, 0);
+        JTable tabela = new JTable(tableModel);
+
+        JPanel botoes = new JPanel(new FlowLayout());
+        JButton btnAtualizar = new JButton("Atualizar Lista");
+        JButton btnRemover = new JButton("Remover Obra Selecionada");
+        JButton btnEditar = new JButton("Editar Obra Selecionada");
+
+        botoes.add(btnAtualizar);
+        botoes.add(btnRemover);
+        botoes.add(btnEditar); 
+
+        btnAtualizar.addActionListener(e -> atualizarLista());
+
+        btnRemover.addActionListener(e -> {
+            int linhaSelecionada = tabela.getSelectedRow();
+            if (linhaSelecionada >= 0) {
+                String titulo = (String) tableModel.getValueAt(linhaSelecionada, 0);
+                int confirm = JOptionPane.showConfirmDialog(panel, "Deseja remover a obra '" + titulo + "'?", "Confirmar Remoção", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    try {
+                        artGallery.removerObra(titulo);
+                        JOptionPane.showMessageDialog(panel, "Obra removida com sucesso!");
+                        atualizarLista();
+                        atualizarExposicoes();
+                    } catch (ObraNaoEncontradaException ex) {
+                        JOptionPane.showMessageDialog(panel, "Erro: " + ex.getMessage());
+                    }
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Selecione uma obra para remover!");
+            }
+        });
+
+        btnEditar.addActionListener(e -> {
+            int linhaSelecionada = tabela.getSelectedRow();
+            if (linhaSelecionada < 0) {
+                JOptionPane.showMessageDialog(panel, "Selecione uma obra para editar!");
+                return;
+            }
+
+            String titulo = (String) tableModel.getValueAt(linhaSelecionada, 0);
+            Obra obra = artGallery.buscar(titulo);
+    
+            if (obra == null) {
+                JOptionPane.showMessageDialog(panel, "Obra não encontrada!");
+                return;
+            }
+
+            // Abrir janela de edição (vou te mostrar como)
+            abrirJanelaEdicao(obra);
+        });
+
+        panel.add(new JScrollPane(tabela), BorderLayout.CENTER);
+        panel.add(botoes, BorderLayout.SOUTH);
+
+        atualizarLista();
+        return panel;
+    }
+
+    private void abrirJanelaEdicao(Obra obra) {
+        System.out.println("🔍 ID da obra sendo editada: " + obra.getId());
+        JDialog dialog = new JDialog(this, "Editar Obra", true);
+        dialog.setSize(350, 250);
+        dialog.setLayout(new GridLayout(0, 2));
+
+        JTextField txtTitulo = new JTextField(obra.getTitulo());
+        JTextField txtAutor = new JTextField(obra.getAutor());
+        JCheckBox chkAtiva = new JCheckBox("Ativa", obra.isAtiva());
+
+        dialog.add(new JLabel("Título:"));
+        dialog.add(txtTitulo);
+        dialog.add(new JLabel("Autor:"));
+        dialog.add(txtAutor);
+        dialog.add(new JLabel("Ativa:"));
+        dialog.add(chkAtiva);
+
+        JButton btnSalvar = new JButton("Salvar");
+        JButton btnCancelar = new JButton("Cancelar");
+
+        btnSalvar.addActionListener(ev -> {
+            obra.setTitulo(txtTitulo.getText());
+            obra.setAutor(txtAutor.getText());
+            obra.setAtiva(chkAtiva.isSelected());
+        
+            try {
+                artGallery.atualizarObra(obra.getId(), obra);
+                JOptionPane.showMessageDialog(dialog, "Obra atualizada!");
+                dialog.dispose();
+                System.out.println("🔄 Chamando atualizarLista()..."); 
+                atualizarLista();
+                System.out.println("✅ atualizarLista() concluído.");
+            } catch (ObraNaoEncontradaException ex) {
+                JOptionPane.showMessageDialog(dialog, "Erro: " + ex.getMessage());
+            }
+        });
+
+        btnCancelar.addActionListener(ev -> dialog.dispose());
+
+        dialog.add(btnSalvar);
+        dialog.add(btnCancelar);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     private JPanel criarPainelAvaliacao() {
@@ -253,33 +349,34 @@ public class ArtGalleryUI extends JFrame {
         JTextField txtUsuario = new JTextField(15);
         JTextField txtNota = new JTextField(5);
         JTextArea txtComentario = new JTextArea(3, 20);
-        
+
         int row = 0;
         addCampo(panel, gbc, "Título da Obra:", txtTitulo, row++);
         addCampo(panel, gbc, "Usuário:", txtUsuario, row++);
         addCampo(panel, gbc, "Nota (0-10):", txtNota, row++);
-        
+
         gbc.gridx = 0;
         gbc.gridy = row;
         panel.add(new JLabel("Comentário:"), gbc);
         gbc.gridx = 1;
         panel.add(new JScrollPane(txtComentario), gbc);
-        
+
         JButton btnAvaliar = new JButton("Enviar Avaliação");
         gbc.gridx = 0;
         gbc.gridy = row + 1;
         gbc.gridwidth = 2;
         panel.add(btnAvaliar, gbc);
-        
+
         JLabel lblStatus = new JLabel(" ");
         gbc.gridy = row + 2;
         panel.add(lblStatus, gbc);
-        
+
         btnAvaliar.addActionListener(e -> {
+            
             try {
                 int nota = Integer.parseInt(txtNota.getText());
                 Avaliacao aval = new Avaliacao(txtUsuario.getText(), nota, txtComentario.getText());
-                artGallery.avaliarObra(txtTitulo.getText(), aval);
+                artGallery.avaliarObra(txtTitulo.getText().trim(), aval);
                 lblStatus.setText("Avaliação adicionada com sucesso!");
                 atualizarLista();
             } catch (NumberFormatException ex) {
@@ -288,23 +385,23 @@ public class ArtGalleryUI extends JFrame {
                 lblStatus.setText("Erro: " + ex.getMessage());
             }
         });
-        
+
         return panel;
     }
 
     private JPanel criarPainelBusca() {
         JPanel panel = new JPanel(new BorderLayout());
-        
+
         JPanel topo = new JPanel(new FlowLayout());
         JTextField txtAutor = new JTextField(20);
         JButton btnBuscar = new JButton("Buscar");
         topo.add(new JLabel("Autor:"));
         topo.add(txtAutor);
         topo.add(btnBuscar);
-        
+
         DefaultTableModel model = new DefaultTableModel(new String[]{"Título", "Tipo", "Detalhes"}, 0);
         JTable tabela = new JTable(model);
-        
+
         btnBuscar.addActionListener(e -> {
             model.setRowCount(0);
             for (Obra obra : artGallery.buscarPorAutor(txtAutor.getText())) {
@@ -312,7 +409,7 @@ public class ArtGalleryUI extends JFrame {
                 model.addRow(new Object[]{obra.getTitulo(), tipo, obra.exibirDetalhes()});
             }
         });
-        
+
         panel.add(topo, BorderLayout.NORTH);
         panel.add(new JScrollPane(tabela), BorderLayout.CENTER);
         return panel;
@@ -320,19 +417,25 @@ public class ArtGalleryUI extends JFrame {
 
     private JPanel criarPainelTopObras() {
         JPanel panel = new JPanel(new BorderLayout());
-        
+
         DefaultTableModel model = new DefaultTableModel(new String[]{"Posição", "Título", "Autor", "Média"}, 0);
         JTable tabela = new JTable(model);
         JButton btnAtualizar = new JButton("Atualizar Ranking");
-        
+
         btnAtualizar.addActionListener(e -> {
+            System.out.println("🔍 Atualizando Top Obras...");
             model.setRowCount(0);
             int pos = 1;
-            for (Obra obra : artGallery.topObras()) {
+            Vector<Obra> top = artGallery.topObras();
+            for (Obra obra : top) {
+                System.out.println("   " + obra.getTitulo() + " - Média: " + obra.mediaAvaliacoes());
                 model.addRow(new Object[]{pos++, obra.getTitulo(), obra.getAutor(), obra.mediaAvaliacoes()});
             }
+            model.fireTableDataChanged(); 
+            System.out.println("✅ Top Obras atualizado!");
+             
         });
-        
+
         btnAtualizar.doClick();
         panel.add(new JScrollPane(tabela), BorderLayout.CENTER);
         panel.add(btnAtualizar, BorderLayout.SOUTH);
@@ -341,89 +444,319 @@ public class ArtGalleryUI extends JFrame {
 
     private JPanel criarPainelExposicoes() {
         JPanel panel = new JPanel(new BorderLayout());
-        
+
         JPanel topo = new JPanel();
         JTextField txtNomeExpo = new JTextField(15);
         JButton btnCriar = new JButton("Nova Exposição");
         topo.add(new JLabel("Nome:"));
         topo.add(txtNomeExpo);
         topo.add(btnCriar);
-        
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        JList<String> listaExpos = new JList<>(listModel);
-        
-        JTextArea txtObrasExpo = new JTextArea(10, 30);
+
+        listModel = new DefaultListModel<>();
+        listaExpos = new JList<>(listModel);
+
+        txtObrasExpo = new JTextArea(10, 30);
         txtObrasExpo.setEditable(false);
-        
+
         listaExpos.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int idx = listaExpos.getSelectedIndex();
                 if (idx >= 0) {
-                    Exposicao exp = exposicoes.get(idx);
-                    txtObrasExpo.setText("Exposição: " + exp.getNome() + "\n\nObras:\n");
-                    for (Obra obra : exp.listarObras()) {
-                        txtObrasExpo.append(" - " + obra.getTitulo() + " (" + obra.getAutor() + ")\n");
+                    Vector<Exposicao> exposicoes = artGallery.listarExposicoes();
+                    if (idx < exposicoes.size()) {
+                        Exposicao exp = exposicoes.get(idx);
+                        txtObrasExpo.setText("Exposição: " + exp.getNome() + "\n\nObras:\n");
+                        Vector<Obra> obras = artGallery.listarObrasDaExposicao(exp.getNome());
+                        for (Obra obra : obras) {
+                            if (obra.isAtiva()) {
+                                txtObrasExpo.append(" - " + obra.getTitulo() + " (" + obra.getAutor() + ")\n");
+                            }
+                        }
                     }
                 }
             }
         });
-        
+
         btnCriar.addActionListener(e -> {
             String nome = txtNomeExpo.getText();
             if (!nome.isEmpty()) {
-                exposicoes.add(new Exposicao(nome));
+                artGallery.criarExposicao(nome);
                 listModel.addElement(nome);
                 txtNomeExpo.setText("");
             }
         });
-        
-        JPanel esquerda = new JPanel(new BorderLayout());
-        esquerda.add(new JLabel("Exposições Criadas:"), BorderLayout.NORTH);
-        esquerda.add(new JScrollPane(listaExpos), BorderLayout.CENTER);
-        
+
         JButton btnAddObra = new JButton("Adicionar Obra à Exposição Selecionada");
-        
-        JPanel direita = new JPanel(new BorderLayout());
-        direita.add(new JScrollPane(txtObrasExpo), BorderLayout.CENTER);
-        direita.add(btnAddObra, BorderLayout.SOUTH);
-        
-        JPanel centro = new JPanel(new GridLayout(1, 2));
-        centro.add(esquerda);
-        centro.add(direita);
-        
-        panel.add(topo, BorderLayout.NORTH);
-        panel.add(centro, BorderLayout.CENTER);
-        
         btnAddObra.addActionListener(e -> {
             int idx = listaExpos.getSelectedIndex();
             if (idx >= 0) {
                 String titulo = JOptionPane.showInputDialog(panel, "Digite o título da obra:");
                 if (titulo != null && !titulo.isEmpty()) {
-            // ✅ USAR O REPOSITÓRIO EXISTENTE (via artGallery)
                     Obra obra = null;
+                    String tituloBusca = titulo.trim();
                     for (Obra o : artGallery.listarObras()) {
-                        if (o.getTitulo().equalsIgnoreCase(titulo)) {
+                        if (o.getTitulo().trim().equalsIgnoreCase(tituloBusca)) {
                             obra = o;
                             break;
                         }
                     }
-                if (obra != null && obra.isAtiva()) {
-                    exposicoes.get(idx).adicionarObra(obra);
-                // Atualizar o texto da área
-                    txtObrasExpo.setText("Exposição: " + exposicoes.get(idx).getNome() + "\n\nObras:\n");
-                    for (Obra o : exposicoes.get(idx).listarObras()) {
-                        txtObrasExpo.append(" - " + o.getTitulo() + " (" + o.getAutor() + ")\n");
+                    if (obra != null && obra.isAtiva()) {
+                        String nomeExpo = listaExpos.getSelectedValue();
+
+                        boolean existe = false;
+                        for (Exposicao exp : artGallery.listarExposicoes()) {
+                            if (exp.getNome().equalsIgnoreCase(nomeExpo) && exp.contemObra(obra)) {
+                                existe = true;
+                                break;
+                            }
+                        }
+
+                        if (existe) {
+                            JOptionPane.showMessageDialog(panel, "Esta obra já está na exposição!");
+                        } else {
+                            artGallery.adicionarObraAExposicao(nomeExpo, obra);
+                            txtObrasExpo.setText("Exposição: " + nomeExpo + "\n\nObras:\n");
+                            for (Exposicao exp : artGallery.listarExposicoes()) {
+                                if (exp.getNome().equalsIgnoreCase(nomeExpo)) {
+                                    for (Obra o : exp.listarObras()) {
+                                        txtObrasExpo.append(" - " + o.getTitulo() + " (" + o.getAutor() + ")\n");
+                                    }
+                                    break;
+                                }
+                            }
+                            JOptionPane.showMessageDialog(panel, "Obra adicionada com sucesso!");
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(panel, "Obra não encontrada ou inativa!");
                     }
-                    JOptionPane.showMessageDialog(panel, "Obra adicionada com sucesso!");
-                } else {
-                    JOptionPane.showMessageDialog(panel, "Obra não encontrada ou inativa!");
                 }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Selecione uma exposição primeiro!");
             }
-        } else {
-            JOptionPane.showMessageDialog(panel, "Selecione uma exposição primeiro!");
-        }
-    });
+        });
+
         
+        JButton btnRemoverObraDaExposicao = new JButton("Remover obra da exposição");
+        btnRemoverObraDaExposicao.addActionListener(expo -> {
+            String nomeExposicao = listaExpos.getSelectedValue();
+            if (nomeExposicao == null) {
+                JOptionPane.showMessageDialog(panel, "Selecione uma exposição primeiro!");
+                return;
+            }
+
+            Vector<Obra> obras = artGallery.listarObrasDaExposicao(nomeExposicao);
+
+            if (obras.isEmpty()) {
+                JOptionPane.showMessageDialog(panel, "Essa exposição não contém obras.");
+                return;
+            }
+
+            String[] nomesObras = new String[obras.size()];
+            for (int i = 0; i < obras.size(); i++) {
+                nomesObras[i] = obras.get(i).getTitulo();
+            }
+
+            String selecionado = (String) JOptionPane.showInputDialog(
+                panel,
+                "Selecione a obra para remover:",
+                "Remover Obra da Exposição",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                nomesObras,
+                nomesObras[0]
+            );
+
+            if (selecionado != null) {
+                String tituloObra = selecionado.split(" \\(")[0];
+                artGallery.removerObraDaExposicao(nomeExposicao, tituloObra);
+                atualizarExposicoes();
+                JOptionPane.showMessageDialog(panel, "Obra removida da exposição com sucesso!");
+            }
+        });
+
+        
+        JButton btnRemoverExposicao = new JButton("Remover Exposição Selecionada");
+        btnRemoverExposicao.addActionListener(e -> {
+            String nomeExpo = listaExpos.getSelectedValue();
+            if (nomeExpo != null) {
+                int confirm = JOptionPane.showConfirmDialog(
+                    panel,
+                    "Deseja remover a exposição '" + nomeExpo + "'?",
+                    "Confirmar Remoção",
+                    JOptionPane.YES_NO_OPTION
+                );
+                if (confirm == JOptionPane.YES_OPTION) {
+                    artGallery.removerExposicao(nomeExpo);
+                    atualizarExposicoes();
+                    JOptionPane.showMessageDialog(panel, "Exposição removida com sucesso!");
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Selecione uma exposição para remover!");
+            }
+        });
+
+        
+        JPanel esquerda = new JPanel(new BorderLayout());
+        esquerda.add(new JLabel("Exposições Criadas:"), BorderLayout.NORTH);
+        esquerda.add(new JScrollPane(listaExpos), BorderLayout.CENTER);
+        esquerda.add(btnRemoverExposicao, BorderLayout.SOUTH);
+
+        
+        JPanel direita = new JPanel(new BorderLayout());
+
+        // Painel de botões empilhados verticalmente
+        JPanel painelBotoes = new JPanel(new GridLayout(2, 1, 5, 5));
+        painelBotoes.add(btnAddObra);
+        painelBotoes.add(btnRemoverObraDaExposicao);
+
+        direita.add(new JScrollPane(txtObrasExpo), BorderLayout.CENTER);
+        direita.add(painelBotoes, BorderLayout.SOUTH);
+
+        
+        JPanel centro = new JPanel(new GridLayout(1, 2));
+        centro.add(esquerda);
+        centro.add(direita);
+
+        panel.add(topo, BorderLayout.NORTH);
+        panel.add(centro, BorderLayout.CENTER);
+
+        atualizarExposicoes();
+
+        return panel;
+    }
+
+    private JPanel criarPainelVerAvaliacoes() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+    
+        JPanel panelTopo = new JPanel(new BorderLayout(10, 10));
+        panelTopo.setBorder(BorderFactory.createTitledBorder("📚 SELECIONE UMA OBRA"));
+
+    
+        JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JTextField txtTitulo = new JTextField(25);
+        JButton btnBuscar = new JButton("🔍 Buscar Avaliações");
+        panelBusca.add(new JLabel("Título da Obra:"));
+        panelBusca.add(txtTitulo);
+        panelBusca.add(btnBuscar);
+
+    
+        String[] colunas = {"Usuário", "Nota", "Comentário"};
+        DefaultTableModel modelAvaliacoes = new DefaultTableModel(colunas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        JTable tabelaAvaliacoes = new JTable(modelAvaliacoes);
+        tabelaAvaliacoes.setRowHeight(25);
+        tabelaAvaliacoes.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        tabelaAvaliacoes.setFont(new Font("Arial", Font.PLAIN, 12));
+
+        JScrollPane scrollTabela = new JScrollPane(tabelaAvaliacoes);
+        scrollTabela.setPreferredSize(new Dimension(400, 200));
+
+        panelTopo.add(panelBusca, BorderLayout.NORTH);
+        panelTopo.add(scrollTabela, BorderLayout.CENTER);
+
+    
+        JPanel panelResumo = new JPanel(new BorderLayout());
+        panelResumo.setBorder(BorderFactory.createTitledBorder("📊 RESUMO DA OBRA"));
+
+        JTextArea txtResumo = new JTextArea();
+        txtResumo.setEditable(false);
+        txtResumo.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        txtResumo.setBackground(new Color(245, 245, 245));
+        txtResumo.setText("🔍 Busque uma obra para ver suas avaliações.");
+
+        JScrollPane scrollResumo = new JScrollPane(txtResumo);
+        scrollResumo.setPreferredSize(new Dimension(400, 100));
+
+        panelResumo.add(scrollResumo, BorderLayout.CENTER);
+
+    
+        btnBuscar.addActionListener(e -> {
+            String titulo = txtTitulo.getText().trim();
+            if (titulo.isEmpty()) {
+                JOptionPane.showMessageDialog(panel, 
+                    "Digite o título da obra!", 
+                    "Aviso", 
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+    
+            modelAvaliacoes.setRowCount(0);
+
+            try {
+            
+                Obra obra = artGallery.buscar(titulo);
+                if (obra == null) {
+                    txtResumo.setText("❌ Obra \"" + titulo + "\" não encontrada!");
+                    return;
+                }
+
+            
+                Vector<Avaliacao> avaliacoes = artGallery.listarAvaliacoes(titulo);
+
+                // Calcula a média com as avaliações que você já buscou
+                double media = 0;
+                if (!avaliacoes.isEmpty()) {
+                    int soma = 0;
+                    for (Avaliacao aval : avaliacoes) {
+                        soma += aval.getNota();
+                    }
+                    media = (double) soma / avaliacoes.size();
+                }
+
+
+            
+                StringBuilder sb = new StringBuilder();
+                sb.append("📖 Título: ").append(obra.getTitulo()).append("\n");
+                sb.append("✍️ Autor: ").append(obra.getAutor()).append("\n");
+                sb.append("📊 Média: ").append(String.format("%.1f", media)).append("/10\n");
+                sb.append("📝 Total de avaliações: ").append(avaliacoes.size()).append("\n");
+                txtResumo.setText(sb.toString());
+
+            
+                if (avaliacoes.isEmpty()) {
+                    JOptionPane.showMessageDialog(panel, 
+                        "Nenhuma avaliação encontrada para \"" + titulo + "\"", 
+                        "Info", 
+                        JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    for (Avaliacao aval : avaliacoes) {
+                        modelAvaliacoes.addRow(new Object[]{
+                            aval.getUsuario(),
+                            aval.getNota() + "/10",
+                            aval.getComentario()
+                        });
+                    }
+                }
+
+            } catch (Exception ex) {
+                txtResumo.setText("❌ Erro ao buscar avaliações: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+    
+        JButton btnAtualizar = new JButton("🔄 Limpar");
+        btnAtualizar.addActionListener(e -> {
+            txtTitulo.setText("");
+            modelAvaliacoes.setRowCount(0);
+            txtResumo.setText("🔍 Busque uma obra para ver suas avaliações.");
+        });
+
+        JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelBotoes.add(btnAtualizar);
+        panelTopo.add(panelBotoes, BorderLayout.SOUTH);
+
+    
+        panel.add(panelTopo, BorderLayout.NORTH);
+        panel.add(panelResumo, BorderLayout.CENTER);
+
         return panel;
     }
 
