@@ -1,10 +1,10 @@
 package dev.meuprojeto.artgallery.repository;
-import java.sql.Connection;        // ← ESSA É A QUE FALTAVA!
-import java.sql.DriverManager;     // ← ESSA TAMBÉM!
-import java.sql.PreparedStatement; // ← E ESSA!
-import java.sql.ResultSet;         // ← E ESSA!
-import java.sql.SQLException;      // ← E ESSA!
-import java.sql.Statement;         // ← E ESSA!
+import java.sql.Connection;        
+import java.sql.DriverManager;     
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;         
+import java.sql.SQLException;     
+import java.sql.Statement;         
 import java.util.Vector;
 
 import dev.meuprojeto.artgallery.exception.NotaInvalidaException;

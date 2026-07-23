@@ -535,7 +535,7 @@ public class ArtGalleryUI extends JFrame {
             }
         });
 
-        // ===== BOTÃO REMOVER OBRA DA EXPOSIÇÃO =====
+        
         JButton btnRemoverObraDaExposicao = new JButton("Remover obra da exposição");
         btnRemoverObraDaExposicao.addActionListener(expo -> {
             String nomeExposicao = listaExpos.getSelectedValue();
@@ -574,7 +574,7 @@ public class ArtGalleryUI extends JFrame {
             }
         });
 
-        // ===== BOTÃO REMOVER EXPOSIÇÃO =====
+        
         JButton btnRemoverExposicao = new JButton("Remover Exposição Selecionada");
         btnRemoverExposicao.addActionListener(e -> {
             String nomeExpo = listaExpos.getSelectedValue();
@@ -595,13 +595,13 @@ public class ArtGalleryUI extends JFrame {
             }
         });
 
-        // ===== PAINEL ESQUERDO =====
+        
         JPanel esquerda = new JPanel(new BorderLayout());
         esquerda.add(new JLabel("Exposições Criadas:"), BorderLayout.NORTH);
         esquerda.add(new JScrollPane(listaExpos), BorderLayout.CENTER);
         esquerda.add(btnRemoverExposicao, BorderLayout.SOUTH);
 
-        // ===== PAINEL DIREITO =====
+        
         JPanel direita = new JPanel(new BorderLayout());
 
         // Painel de botões empilhados verticalmente
@@ -612,7 +612,7 @@ public class ArtGalleryUI extends JFrame {
         direita.add(new JScrollPane(txtObrasExpo), BorderLayout.CENTER);
         direita.add(painelBotoes, BorderLayout.SOUTH);
 
-        // ===== CENTRO =====
+        
         JPanel centro = new JPanel(new GridLayout(1, 2));
         centro.add(esquerda);
         centro.add(direita);
@@ -629,11 +629,11 @@ public class ArtGalleryUI extends JFrame {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-    // ===== PAINEL SUPERIOR: Seleção da obra =====
+    
         JPanel panelTopo = new JPanel(new BorderLayout(10, 10));
         panelTopo.setBorder(BorderFactory.createTitledBorder("📚 SELECIONE UMA OBRA"));
 
-    // Campo de busca + botão
+    
         JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JTextField txtTitulo = new JTextField(25);
         JButton btnBuscar = new JButton("🔍 Buscar Avaliações");
@@ -641,7 +641,7 @@ public class ArtGalleryUI extends JFrame {
         panelBusca.add(txtTitulo);
         panelBusca.add(btnBuscar);
 
-    // Tabela para mostrar as avaliações
+    
         String[] colunas = {"Usuário", "Nota", "Comentário"};
         DefaultTableModel modelAvaliacoes = new DefaultTableModel(colunas, 0) {
             @Override
@@ -660,7 +660,7 @@ public class ArtGalleryUI extends JFrame {
         panelTopo.add(panelBusca, BorderLayout.NORTH);
         panelTopo.add(scrollTabela, BorderLayout.CENTER);
 
-    // ===== PAINEL CENTRAL: Resumo da obra =====
+    
         JPanel panelResumo = new JPanel(new BorderLayout());
         panelResumo.setBorder(BorderFactory.createTitledBorder("📊 RESUMO DA OBRA"));
 
@@ -675,7 +675,7 @@ public class ArtGalleryUI extends JFrame {
 
         panelResumo.add(scrollResumo, BorderLayout.CENTER);
 
-    // ===== AÇÃO DO BOTÃO BUSCAR =====
+    
         btnBuscar.addActionListener(e -> {
             String titulo = txtTitulo.getText().trim();
             if (titulo.isEmpty()) {
@@ -686,18 +686,18 @@ public class ArtGalleryUI extends JFrame {
                 return;
             }
 
-        // Limpa a tabela
+    
             modelAvaliacoes.setRowCount(0);
 
             try {
-            // Busca a obra primeiro para ver se existe
+            
                 Obra obra = artGallery.buscar(titulo);
                 if (obra == null) {
                     txtResumo.setText("❌ Obra \"" + titulo + "\" não encontrada!");
                     return;
                 }
 
-            // Busca as avaliações
+            
                 Vector<Avaliacao> avaliacoes = artGallery.listarAvaliacoes(titulo);
 
                 // Calcula a média com as avaliações que você já buscou
@@ -711,7 +711,7 @@ public class ArtGalleryUI extends JFrame {
                 }
 
 
-            // Preenche o resumo
+            
                 StringBuilder sb = new StringBuilder();
                 sb.append("📖 Título: ").append(obra.getTitulo()).append("\n");
                 sb.append("✍️ Autor: ").append(obra.getAutor()).append("\n");
@@ -719,7 +719,7 @@ public class ArtGalleryUI extends JFrame {
                 sb.append("📝 Total de avaliações: ").append(avaliacoes.size()).append("\n");
                 txtResumo.setText(sb.toString());
 
-            // Preenche a tabela
+            
                 if (avaliacoes.isEmpty()) {
                     JOptionPane.showMessageDialog(panel, 
                         "Nenhuma avaliação encontrada para \"" + titulo + "\"", 
@@ -741,7 +741,7 @@ public class ArtGalleryUI extends JFrame {
             }
         });
 
-    // ===== BOTÃO ATUALIZAR (opcional) =====
+    
         JButton btnAtualizar = new JButton("🔄 Limpar");
         btnAtualizar.addActionListener(e -> {
             txtTitulo.setText("");
@@ -753,7 +753,7 @@ public class ArtGalleryUI extends JFrame {
         panelBotoes.add(btnAtualizar);
         panelTopo.add(panelBotoes, BorderLayout.SOUTH);
 
-    // ===== MONTAGEM FINAL =====
+    
         panel.add(panelTopo, BorderLayout.NORTH);
         panel.add(panelResumo, BorderLayout.CENTER);
 
