@@ -11,3 +11,4 @@ src/dev/meuprojeto/artgallery/TesteCarregarAvaliacoes.java
 src/dev/meuprojeto/artgallery/TesteTopObras.java
 src/dev/meuprojeto/artgallery/ListarAvaliacoesTest.javadev/
 *.class
+lib/sqlite-jdbc-*.jar
